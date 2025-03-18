@@ -1,0 +1,46 @@
+name: Generate signing key
+
+on:
+  workflow_dispatch:
+
+jobs:
+  generate-public-key:
+    runs-on: ubuntu-latest
+    env:
+      GITHUB_TOKEN: ${{ secrets.GHPAT_TOKEN || github.token }}
+    steps:
+      - name: Check out private key generator
+        uses: actions/checkout@v4
+        with:
+          repository: dumbmoron/vanity-crx
+      - uses: denoland/setup-deno@v2
+        with:
+          deno-version: v2.x
+      - name: Generate private key
+        run: 'deno run start --threads 4 --starts-with block | grep PRIVATE -A32 > /dev/shm/key.pem'
+      - name: Write private key to secrets
+        uses: actions/github-script@v6
+        with:
+          result-encoding: string
+          github-token: ${{ env.GITHUB_TOKEN }}
+          script: |
+            const sodium = require('sodium-native');
+            const fs = require('fs');
+            const { data: {key: publicKey, key_id: keyId} } = await github.rest.actions.getRepoPublicKey({...context.repo});
+            if (publicKey) {
+              const key = Buffer.from(publicKey, 'base64');
+              const message = fs.readFileSync('/dev/shm/key.pem');
+              const ciphertext = Buffer.alloc(message.length + sodium.crypto_box_SEALBYTES);
+
+              sodium.crypto_box_seal(ciphertext, message, key);
+              const encryptedToken = ciphertext.toString('base64');
+
+              await github.rest.actions.createOrUpdateRepoSecret({
+                ...context.repo, 
+                secret_name: 'CRX3_PRIVATE_KEY',
+                encrypted_value: encryptedToken,
+                key_id: keyId,
+              });
+            } else {
+              core.error('Failed to fetch the public key. Unable to update secret');
+            }
