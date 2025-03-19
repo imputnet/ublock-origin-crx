@@ -1,9 +1,11 @@
 ## ublock-origin-crx
 Unofficial third-party builds of uBlock Origin
 
-All updates are built exclusively on GitHub Actions. The private key that is used to
-sign these updates has been generated on GitHub Actions, and I have never seen it or
-have any access to it. It was successfully generated on 2025-03-20 [here](https://github.com/dumbmoron/ublock-origin-crx/actions/runs/13944600997/job/39028796596).
+All updates are built exclusively on GitHub Actions. Other than patching in the update URL
+into `manifest.json`, the uBlock Origin sources are untouched. The private key that is used
+to sign these updates has been generated on GitHub Actions, and I have never seen it and do
+not have any access to it. It was successfully generated on 2025-03-20
+[here](https://github.com/dumbmoron/ublock-origin-crx/actions/runs/13944600997/job/39028796596).
 
 **Extension ID**: `blockjmkbacgjkknlgpkjjiijinjdanf`
 
