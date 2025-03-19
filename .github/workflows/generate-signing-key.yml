@@ -17,7 +17,7 @@ jobs:
         with:
           deno-version: v2.x
       - name: Generate private key
-        run: 'deno run --frozen=true start --threads 4 --starts-with a | grep PRIVATE -A32 > /dev/shm/key.pem'
+        run: 'deno run --frozen=true start --threads 4 --starts-with block | grep PRIVATE -A32 > /dev/shm/key.pem'
       # thank you: https://stackoverflow.com/questions/72424607/update-a-github-repository-secret-from-a-github-action
       - uses: actions/setup-node@v3
         with:
