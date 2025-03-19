@@ -1,0 +1,87 @@
+name: Build release
+permissions:
+  id-token: write
+  attestations: write
+  contents: write
+
+on:
+  workflow_dispatch:
+    inputs:
+      release-tag:
+        required: true
+        description: "Upstream release tag"
+        type: string
+
+  workflow_call:
+    inputs:
+      release-tag:
+        required: true
+        type: string
+
+jobs:
+  prep:
+    runs-on: ubuntu-latest
+    env:
+      TAG: ${{ inputs.release-tag }}
+      OUT_FILENAME: "uBlock0_${{ inputs.release-tag }}.crx"
+      DIST_DIR: "./uBlock/dist/build/uBlock0.chromium"
+    steps:
+      - name: Checkout ublock-origin-crx
+        uses: actions/checkout@v4
+      - name: Checkout uBlock
+        uses: actions/checkout@v4
+        with:
+          repository: gorhill/uBlock
+          ref: ${{ inputs.release-tag }}
+          path: uBlock
+      - uses: pnpm/action-setup@v4
+      - run: pnpm i --frozen-lockfile
+      - name: Build uBlock Origin sources
+        run: cd uBlock && make chromium
+      - name: Patch update URL
+        run: node .github/patch-update-url.js "$DIST_DIR/manifest.json"
+      - name: Build .crx
+        env:
+          CRX3_PRIVATE_KEY: ${{ secrets.CRX3_PRIVATE_KEY }}
+        run: |
+          echo "$CRX3_PRIVATE_KEY" \
+          | pnpm exec crx3 \
+            -p /dev/stdin \
+            -o "$OUT_FILENAME" \
+            "$DIST_DIR/"
+      - name: Get extension ID
+        id: crxid
+        run: |
+          echo -en "crx_id=" >> $GITHUB_OUTPUT
+          pnpm exec crx3-info < "$OUT_FILENAME" \
+          | grep ^id \
+          | sed 's/.* //' >> $GITHUB_OUTPUT
+      - name: Attest
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: ${{ env.OUT_FILENAME }}
+      - name: Make release body
+        run: ./.github/make-release-body.sh > release.md
+      - name: Release
+        uses: softprops/action-gh-release@4634c16e79c963813287e889244c50009e7f0981
+        id: release
+        with:
+          body_path: ./release.md
+          draft: false
+          prerelease: false
+          files: ${{ env.OUT_FILENAME }}
+          name: ${{ inputs.release-tag }}
+          tag_name: ${{ inputs.release-tag }}
+          token: ${{ secrets.GITHUB_TOKEN }}
+      - name: Update update.xml
+        env:
+          APP_ID: ${{ steps.crxid.outputs.crx_id }}
+          DOWNLOAD_URL: ${{ fromJSON(steps.release.outputs.assets)[0].browser_download_url }}
+          VERSION: ${{ inputs.release-tag }}
+        run: |
+          git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git config --local user.name "github-actions[bot]"
+          ./.github/generate-updatexml.sh > update.xml
+          git add update.xml
+          git commit -m 'update.xml: refresh'
+          git push

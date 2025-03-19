@@ -1,0 +1,27 @@
+name: Check for new upstream release
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: "0 0 * * *"
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      TAG_NAME: ${{ steps.needs-release.outputs.TAG_NAME }}
+    steps:
+      - name: Checkout ublock-origin-crx
+        uses: actions/checkout@v4
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
+      - run: ./.github/check-needs-release.js | tee -a "$GITHUB_OUTPUT"
+        id: needs-release
+  build:
+    needs: check
+    if: needs.check.outputs.TAG_NAME
+    uses: ./.github/workflows/build-release.yml
+    secrets: inherit
+    with:
+      release-tag: ${{ needs.check.outputs.TAG_NAME }}
