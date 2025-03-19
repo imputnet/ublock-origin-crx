@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
 
 jobs:
-  generate-public-key:
+  generate-private-key:
     runs-on: ubuntu-latest
     env:
       GITHUB_TOKEN: ${{ secrets.GHPAT_TOKEN || github.token }}
@@ -17,7 +17,14 @@ jobs:
         with:
           deno-version: v2.x
       - name: Generate private key
-        run: 'deno run start --threads 4 --starts-with block | grep PRIVATE -A32 > /dev/shm/key.pem'
+        run: 'deno run --frozen=true start --threads 4 --starts-with a | grep PRIVATE -A32 > /dev/shm/key.pem'
+      # thank you: https://stackoverflow.com/questions/72424607/update-a-github-repository-secret-from-a-github-action
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 20
+      - run: |
+          npm install --global sodium-native@4.3.3
+          echo "NODE_PATH=$(npm root -g)" >> $GITHUB_ENV
       - name: Write private key to secrets
         uses: actions/github-script@v6
         with:
@@ -44,3 +51,4 @@ jobs:
             } else {
               core.error('Failed to fetch the public key. Unable to update secret');
             }
+      - run: rm /dev/shm/key.pem
