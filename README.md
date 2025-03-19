@@ -1,5 +1,5 @@
 ## ublock-origin-crx
-Unofficial third-party builds of uBlock Origin
+Unofficial third-party builds of (Manifest V2, not Lite) uBlock Origin
 
 All updates are built exclusively on GitHub Actions. Other than patching in the update URL
 into `manifest.json`, the uBlock Origin sources are untouched. The private key that is used
