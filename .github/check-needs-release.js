@@ -14,7 +14,7 @@ const checkNewRelease = async () => {
     const ublock_release = await getLatestRelease('gorhill/uBlock');
     const our_release = await getLatestRelease(process.env.GITHUB_REPOSITORY || 'dumbmoron/ublock-origin-crx');
 
-    const needs_release = !our_release || new Date(ublock_release.created_at) > new Date(our_release.created_at);
+    const needs_release = !our_release || new Date(ublock_release.published_at) > new Date(our_release.published_at);
     const sources = ublock_release.assets.find(a => a.name.endsWith('chromium.zip'));
     if (needs_release && sources) {
         console.log('TAG_NAME=' + ublock_release.tag_name);
