@@ -62,6 +62,17 @@ jobs:
           subject-path: ${{ env.OUT_FILENAME }}
       - name: Make release body
         run: ./.github/make-release-body.sh > release.md
+      - name: Release
+        uses: softprops/action-gh-release@4634c16e79c963813287e889244c50009e7f0981
+        id: release
+        with:
+          body_path: ./release.md
+          draft: false
+          prerelease: false
+          files: ${{ env.OUT_FILENAME }}
+          name: ${{ inputs.release-tag }}
+          tag_name: ${{ inputs.release-tag }}
+          token: ${{ secrets.GITHUB_TOKEN }}
       - name: Update update.xml
         env:
           APP_ID: ${{ steps.crxid.outputs.crx_id }}
@@ -74,14 +85,3 @@ jobs:
           git add update.xml
           git commit -m 'update.xml: refresh'
           git push
-      - name: Release
-        uses: softprops/action-gh-release@4634c16e79c963813287e889244c50009e7f0981
-        id: release
-        with:
-          body_path: ./release.md
-          draft: false
-          prerelease: false
-          files: ${{ env.OUT_FILENAME }}
-          name: ${{ inputs.release-tag }}
-          tag_name: ${{ inputs.release-tag }}
-          token: ${{ secrets.GITHUB_TOKEN }}
