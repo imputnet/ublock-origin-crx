@@ -1,6 +1,6 @@
 <?xml version='1.0' encoding='UTF-8'?>
 <gupdate xmlns='http://www.google.com/update2/response' protocol='2.0'>
   <app appid='blockjmkbacgjkknlgpkjjiijinjdanf'>
-    <updatecheck codebase='https://github.com/imputnet/ublock-origin-crx/releases/download/1.75.4/uBlock0_1.75.4.crx' version='1.75.4' />
+    <updatecheck codebase='https://github.com/imputnet/ublock-origin-crx/releases/download/1.76.0/uBlock0_1.76.0.crx' version='1.76.0' />
   </app>
 </gupdate>
