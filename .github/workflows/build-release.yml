@@ -60,18 +60,19 @@ jobs:
         uses: actions/attest-build-provenance@v2
         with:
           subject-path: ${{ env.OUT_FILENAME }}
+      - name: Make release body
+        run: ./.github/make-release-body.sh > "$RUNNER_TEMP/release.md"
       - name: Release
-        env:
-          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          TAG_NAME: ${{ inputs.release-tag }}
-        run: |
-          gh release create "$TAG_NAME" --draft --notes "$(./.github/make-release-body.sh)"
-          gh release upload "$TAG_NAME" "$OUT_FILENAME"
-          gh release edit "$TAG_NAME" --draft=false
+        uses: imputnet/immutable-release@v1
+        with:
+          tag: ${{ inputs.release-tag }}
+          notes-file: ${{ runner.temp }}/release.md
+          files: ${{ env.OUT_FILENAME }}
+          latest: true
       - name: Update update.xml
         env:
           APP_ID: ${{ steps.crxid.outputs.crx_id }}
-          DOWNLOAD_URL: ${{ fromJSON(steps.release.outputs.assets)[0].browser_download_url }}
+          DOWNLOAD_URL: ${{ github.server_url }}/${{ github.repository }}/releases/download/${{ inputs.release-tag }}/${{ env.OUT_FILENAME }}
           VERSION: ${{ inputs.release-tag }}
         run: |
           git config --local user.email "41898282+github-actions[bot]@users.noreply.github.com"
